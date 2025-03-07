@@ -6,7 +6,7 @@ program read_covalance
         real, dimension(3) :: radii
         character(len=2) :: atom_symbol
         integer :: atom_number
-    end type atomdata    
+    end type atomdata
     
     ! There are AtomData arrays and simple AtomData
     type(atomdata), dimension(118) :: atoms_arrays
