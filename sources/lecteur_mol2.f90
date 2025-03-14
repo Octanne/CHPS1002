@@ -35,6 +35,7 @@ contains
         type(atominfo), allocatable :: atoms(:)
         character(len=100) :: line, atom_name
         integer :: ios, unit, i, nb_atoms, num_atom
+        character(len=10) :: atom_symbol
 
         unit = 10
         open(unit=unit, file=trim(filename), status='old', action='read')
@@ -71,7 +72,8 @@ contains
             if (index(line, '@<TRIPOS>BOND') /= 0) then
                 exit
             end if
-            read(line, *) num_atom, atoms(i)%atom_symbol, atoms(i)%x, atoms(i)%y, atoms(i)%z
+            read(line, *) num_atom, atom_symbol, atoms(i)%x, atoms(i)%y, atoms(i)%z, atoms(i)%atom_symbol
+            !atoms(i)%atom_symbol = adjustl(trim(atoms(i)%atom_symbol))
             i = i + 1
         end do
         close(unit)
