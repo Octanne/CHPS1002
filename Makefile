@@ -37,16 +37,23 @@ $(BIN_DIR)/complete_mol2: $(OBJ_DIR)/complete_mol2.o
 	-@echo ""
 	-@$(CC) -o $@ $+
 
+$(BIN_DIR)/complete_mol2_parallel: $(OBJ_DIR)/complete_mol2_parallel.o
+	-@echo ""
+	-@echo "Linking    $(@)"
+	-@echo ""
+	-@$(CC) -o $@ $+ -fopenmp
+
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.f90 
 	-@echo ""
 	-@echo "Generating $@"
 	-@mkdir -p $(OBJ_DIR)
-	-@$(CC) -c $< -o $@
+	-@$(CC) -c $< -o $@ -fopenmp
 
 EXEC = $(BIN_DIR)/lecteur_mol2
 EXEC+= $(BIN_DIR)/chargeur_covalence
 EXEC+= $(BIN_DIR)/affiche_topologie
 EXEC+= $(BIN_DIR)/complete_mol2
+EXEC+= $(BIN_DIR)/complete_mol2_parallel
 
 ###------------------------------
 ### Cleaning
