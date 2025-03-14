@@ -31,6 +31,12 @@ $(BIN_DIR)/affiche_topologie: $(OBJ_DIR)/affiche_topologie.o
 	-@echo ""
 	-@$(CC) -o $@ $+
 
+$(BIN_DIR)/complete_mol2: $(OBJ_DIR)/complete_mol2.o
+	-@echo ""
+	-@echo "Linking    $(@)"
+	-@echo ""
+	-@$(CC) -o $@ $+
+
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.f90 
 	-@echo ""
 	-@echo "Generating $@"
@@ -40,6 +46,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.f90
 EXEC = $(BIN_DIR)/lecteur_mol2
 EXEC+= $(BIN_DIR)/chargeur_covalence
 EXEC+= $(BIN_DIR)/affiche_topologie
+EXEC+= $(BIN_DIR)/complete_mol2
 
 ###------------------------------
 ### Cleaning

@@ -22,6 +22,8 @@ program affiche_topologie
     character(len=255) :: filenameCovalent
     ! We put the MOL2 file in a file
     character(len=255) :: filenameMol2
+    ! We put the MOL2 output file
+    character(len=255) :: new_filename
     ! There are the bonds
     type bond
         integer :: atom1, atom2
@@ -33,7 +35,7 @@ program affiche_topologie
     
     ! We ask the user for the filename of the MOL2 file in first argument and the covalent radii in second argument
     if (command_argument_count() /= 2) then
-        print *, 'Usage: affiche_topologie <filenameMol2> <filenameCovalent>'
+        print *, 'Usage: complete_mol2 <filenameMol2> <filenameCovalent>'
         stop
     end if
     call get_command_argument(1, filenameMol2)
@@ -56,7 +58,89 @@ program affiche_topologie
     ! We determine the topology
     call determine_topology(atoms, atoms_arrays, bonds, bond_count)
 
+    ! Génération du nouveau fichier MOL2
+    new_filename = generate_output_filename(filenameMol2)
+    call write_complete_mol2(filenameMol2, new_filename, bonds, bond_count)
+    print *, 'Fichier MOL2 complété créé : ', trim(new_filename)
+
 contains
+    ! Fonction pour générer le nom du fichier de sortie
+    function generate_output_filename(input_filename) result(output_filename)
+        character(len=*), intent(in) :: input_filename
+        character(len=:), allocatable :: output_filename
+        integer :: dot_pos
+
+        dot_pos = index(input_filename, '.', back=.true.)
+        if (dot_pos == 0) then
+            output_filename = trim(input_filename) // '_WITH_BONDS'
+        else
+            output_filename = input_filename(1:dot_pos-1) // '_WITH_BONDS' // input_filename(dot_pos:)
+        end if
+    end function generate_output_filename
+
+    ! Subroutine pour écrire le fichier MOL2 complet
+    subroutine write_complete_mol2(orig_file, new_file, bonds, bond_count)
+        character(len=*), intent(in) :: orig_file, new_file
+        type(bond), intent(in) :: bonds(:)
+        integer, intent(in) :: bond_count
+        integer :: u_in, u_out, ios, i, bond_id
+        character(len=1000) :: line
+        logical :: in_bond_section, after_atom
+
+        open(newunit=u_in, file=orig_file, status='old', action='read')
+        open(newunit=u_out, file=new_file, status='replace', action='write')
+
+        after_atom = .false.
+        in_bond_section = .false.
+
+        do
+            read(u_in, '(A)', iostat=ios) line
+            if (ios /= 0) exit
+
+            ! Gestion des sections spéciales
+            if (index(line, '@<TRIPOS>ATOM') /= 0) then
+                after_atom = .true.
+                in_bond_section = .false.
+                write(u_out, '(A)') trim(line)
+            else if (index(line, '@<TRIPOS>BOND') /= 0) then
+                in_bond_section = .true.
+                cycle  ! Ignore la section BOND originale
+            else if (line(1:1) == '@' .and. index(line, '<TRIPOS>') /= 0) then
+                if (after_atom) then
+                    call write_bond_section(u_out, bonds, bond_count)
+                    after_atom = .false.
+                end if
+                in_bond_section = .false.
+                write(u_out, '(A)') trim(line)
+            else
+                if (in_bond_section) then
+                    cycle  ! Ignore les lignes de liaison existantes
+                else
+                    write(u_out, '(A)') trim(line)
+                end if
+            end if
+        end do
+
+        ! Écriture finale si nécessaire
+        if (after_atom) call write_bond_section(u_out, bonds, bond_count)
+
+        close(u_in)
+        close(u_out)
+    end subroutine write_complete_mol2
+
+    ! Subroutine pour écrire la section BOND
+    subroutine write_bond_section(u_out, bonds, bond_count)
+        integer, intent(in) :: u_out, bond_count
+        type(bond), intent(in) :: bonds(:)
+        integer :: i
+        
+        write(u_out, '(A)') '@<TRIPOS>BOND'
+        do i = 1, bond_count
+            write(u_out, '(I6,1X,I5,1X,I5,1X,A1)') i, bonds(i)%atom1, bonds(i)%atom2, &
+                char(ichar('0') + bonds(i)%bond_type)
+        end do
+    end subroutine write_bond_section
+
     ! Fonction pour calculer la distance entre deux atomes
     real function distance(atom1, atom2)
         type(atominfo), intent(in) :: atom1, atom2
