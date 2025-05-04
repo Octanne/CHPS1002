@@ -13,6 +13,25 @@ help:
 	@echo "make clean       : supprime *tous* les fichiers reproductibles ici les.o et aussi les fichiers parasites"
 	@echo "make clean_all   : supprime *tous* les fichiers reproductibles, les fichiers parasites et aussi les exécutables"
 
+# Algo_gen
+$(BIN_DIR)/algo_gen: $(OBJ_DIR)/main.o $(OBJ_DIR)/mol2.o
+	-@echo ""
+	-@echo "Linking    $(@)"
+	-@echo ""
+	-@$(CC) -o $@ $+ -fopenmp
+
+$(OBJ_DIR)/mol2.o: $(SRC_DIR)/mol2.f90
+	-@echo ""
+	-@echo "Generating $@"
+	-@mkdir -p $(OBJ_DIR)
+	-@$(CC) -c $(SRC_DIR)/mol2.f90 -o $@ -J$(OBJ_DIR) -fopenmp
+
+$(OBJ_DIR)/main.o: $(SRC_DIR)/main.f90 $(OBJ_DIR)/mol2.o
+	-@echo ""
+	-@echo "Generating $@"
+	-@mkdir -p $(OBJ_DIR)
+	-@$(CC) -c $(SRC_DIR)/main.f90 -o $@ -J$(OBJ_DIR) -fopenmp
+
 $(BIN_DIR)/lecteur_mol2: $(OBJ_DIR)/lecteur_mol2.o
 	-@echo ""
 	-@echo "Linking    $(@)"
@@ -54,6 +73,7 @@ EXEC+= $(BIN_DIR)/chargeur_covalence
 EXEC+= $(BIN_DIR)/affiche_topologie
 EXEC+= $(BIN_DIR)/complete_mol2
 EXEC+= $(BIN_DIR)/complete_mol2_parallel
+EXEC+= $(BIN_DIR)/algo_gen
 
 ###------------------------------
 ### Cleaning
@@ -61,6 +81,7 @@ EXEC+= $(BIN_DIR)/complete_mol2_parallel
 
 clean:
 	-@rm -rf $(OBJ_DIR)/*.o
+	-@rm -rf $(OBJ_DIR)/*.mod
 
 clean_all: clean cleanSource
 	-@rm -rf $(EXEC)
