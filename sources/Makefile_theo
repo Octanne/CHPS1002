@@ -1,0 +1,24 @@
+FC = gfortran
+FFLAGS = -O3 -fopenmp
+
+OBJS = mol2.o main.o
+
+all: algo_gen
+
+algo_gen: $(OBJS)
+	$(FC) $(FFLAGS) -o algo_gen $(OBJS)
+
+# individuals.o: individuals.f90
+# 	$(FC) $(FFLAGS) -c individuals.f90
+
+mol2.o: mol2.f90
+	$(FC) $(FFLAGS) -c mol2.f90
+
+# utils.o: utils.f90 mol2.o
+# 	$(FC) $(FFLAGS) -c utils.f90
+
+main.o: main.f90 mol2.o
+	$(FC) $(FFLAGS) -c main.f90
+
+clean:
+	rm -f *.o *.mod algo_gen
